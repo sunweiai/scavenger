@@ -1,12 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"scavenger/service"
+	"time"
 )
 
 func main() {
-	env := service.GetEnv()
-	fmt.Println("env:%v\n", env)
-	service.HandMetrics(env)
+	for {
+		time.Sleep(15 * time.Second)
+		env := service.GetEnv()
+		service.HandMetrics(env)
+	}
 }

@@ -13,11 +13,11 @@ import (
 )
 
 type MetricsInfo struct {
-	job       string
-	pod       string
-	namespace string
-	cpuUsage  float64
-	memUsage  int64
+	Job       string
+	Pod       string
+	Namespace string
+	CpuUsage  float64
+	MemUsage  int64
 }
 
 type SourceLimit struct {
@@ -37,7 +37,7 @@ func InArray(value string, arrays []string) bool {
 	return false
 }
 
-func (sl *SourceLimit) ClientProm(prometheusURL string) (context.Context, v1.API) {
+func (sl *SourceLimit) ClientProm(prometheusURL string) (context.Context, v1.API, context.CancelFunc) {
 	fmt.Println("创建prometheus的连接")
 	client, err := api.NewClient(api.Config{Address: prometheusURL})
 	if err != nil {
@@ -47,12 +47,14 @@ func (sl *SourceLimit) ClientProm(prometheusURL string) (context.Context, v1.API
 
 	v1api := v1.NewAPI(client)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	return ctx, v1api
+	//defer cancel()
+	return ctx, v1api, cancel
 }
 
-func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API) []MetricsInfo {
+func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API, cancel context.CancelFunc) []MetricsInfo {
 	//cpuch := make(chan metricsInfo)
+
+	defer cancel()
 	podMetrics := make([]MetricsInfo, 0)
 	var mi MetricsInfo
 
@@ -61,8 +63,7 @@ func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API) []Metr
 		End:   time.Now(),
 		Step:  time.Minute,
 	}
-	fmt.Printf(sl.Job)
-	result, warnings, err := v1api.QueryRange(ctx, "sum(irate(container_cpu_usage_seconds_total{container!=\"POD\",job=\"k8s-test\"}[5m])) by (namespace, pod)", r, v1.WithTimeout(5*time.Second))
+	result, warnings, err := v1api.QueryRange(ctx, "rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\",job=\""+sl.Job+"\",pod!=\"\"}[5m])", r, v1.WithTimeout(5*time.Second))
 	if err != nil {
 		fmt.Printf("Error querying Prometheus: %v\n", err)
 		os.Exit(1)
@@ -76,23 +77,20 @@ func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API) []Metr
 	}
 	//fmt.Printf("matrix:%v\n", metrix.String())
 	for i := 0; i < len(metrix); i++ {
-		//fmt.Printf("value:%v,metric:%v\n", metrix[i].Values[0], metrix[i].Metric)
-
 		cpuUsage, err := strconv.ParseFloat(metrix[i].Values[0].Value.String(), 64)
 		memUsage := MetricsMemValue(sl.Job, string(metrix[i].Metric["namespace"]), string(metrix[i].Metric["pod"]), ctx, v1api)
 
 		if err != nil {
 			fmt.Printf("Error convert cpu or memory value ")
 		}
-		fmt.Printf("cpu:%f,mem:%d\n", cpuUsage, memUsage)
-		if InArray(string(metrix[i].Metric["namespace"]), sl.NameSpace) {
+		//fmt.Printf("namespace:%s,cpu:%f,mem:%d\n", string(metrix[i].Metric["namespace"]), cpuUsage, memUsage)
+		if !InArray(string(metrix[i].Metric["namespace"]), sl.NameSpace) {
 			if cpuUsage >= sl.CpuLimit || memUsage/1024/1024 >= sl.MemLimit {
-				mi.namespace = string(metrix[i].Metric["namespace"])
-				mi.pod = string(metrix[i].Metric["pod"])
-				mi.cpuUsage, err = strconv.ParseFloat(metrix[i].Values[0].Value.String(), 64)
-				mi.memUsage = memUsage
+				mi.Namespace = string(metrix[i].Metric["namespace"])
+				mi.Pod = string(metrix[i].Metric["pod"])
+				mi.CpuUsage, err = strconv.ParseFloat(metrix[i].Values[0].Value.String(), 64)
+				mi.MemUsage = memUsage
 				podMetrics = append(podMetrics, mi)
-
 			}
 		}
 
@@ -109,6 +107,11 @@ func MetricsMemValue(job, namespace, podname string, ctx context.Context, v1api 
 	if len(warnings) > 0 {
 		fmt.Printf("Warnings: %v\n", warnings)
 	}
+	//fmt.Printf("mem:%v\n", memResult)
 	memUsage, err := strconv.ParseInt(memResult.(model.Vector)[0].Value.String(), 10, 64)
+	if err != nil {
+		fmt.Printf("err:%v\n", err)
+	}
+
 	return memUsage
 }

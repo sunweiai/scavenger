@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"scavenger/client"
 	"scavenger/utils"
 	"strconv"
 	"strings"
@@ -44,7 +45,8 @@ func GetEnv() *varEnv {
 }
 
 func HandMetrics(envVar *varEnv) {
-	//clientSet := client.RestClient()
+	clientSet := client.RestClient()
+	kindinfo := new(KindInfo)
 	var kubeClient = &utils.SourceLimit{
 		MemLimit:   envVar.memLimit,
 		CpuLimit:   envVar.cpuLimit,
@@ -54,12 +56,15 @@ func HandMetrics(envVar *varEnv) {
 	}
 
 	// 获取超过阈值的metrics列表
-	ctx, v1api := kubeClient.ClientProm(envVar.prometheusUrl)
-	podMetricsList := kubeClient.MetricsCPUValue(ctx, v1api)
+	ctx, v1api, cancel := kubeClient.ClientProm(envVar.prometheusUrl)
+	//mem := utils.MetricsMemValue("k8s-test", "default", "whoami-6cdf669df7-mqjwx", ctx, v1api)
+	podMetricsList := kubeClient.MetricsCPUValue(ctx, v1api, cancel)
 
 	fmt.Println(podMetricsList)
 	// 根据metrics列表获取到要删除的pod
-	//for _, podMetrics = range podMetricsList {
-	//
-	//}
+	//podMetrics := new(utils.MetricsInfo)
+	for _, podMetrics := range podMetricsList {
+		sourceType := kindinfo.GetPodType(clientSet, podMetrics.Namespace, podMetrics.Pod)
+		DeleteSource(clientSet, sourceType.sourceName, sourceType.kind, sourceType.nameSpace)
+	}
 }
