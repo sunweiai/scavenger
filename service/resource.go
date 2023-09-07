@@ -97,7 +97,6 @@ func GetDeployment(clientSet *kubernetes.Clientset, deploymentName, namespace st
 	api := clientSet.AppsV1()
 	_, err := api.Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 	if err != nil {
-		//fmt.Printf("deploment名称：%s", deployment.Name)
 		return false
 	}
 	return true
@@ -107,7 +106,6 @@ func GetDaemonset(clientSet *kubernetes.Clientset, daemonsetName, namespace stri
 	api := clientSet.AppsV1()
 	_, err := api.DaemonSets(namespace).Get(context.TODO(), daemonsetName, metav1.GetOptions{})
 	if err != nil {
-		//fmt.Printf("deploment名称：%s", daemonset.Name)
 		return false
 	}
 	return true

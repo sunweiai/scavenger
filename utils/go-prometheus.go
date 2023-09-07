@@ -18,6 +18,7 @@ type MetricsInfo struct {
 	Namespace string
 	CpuUsage  float64
 	MemUsage  int64
+	TimeStap  time.Time
 }
 
 type SourceLimit struct {
@@ -37,8 +38,9 @@ func InArray(value string, arrays []string) bool {
 	return false
 }
 
+// 创建到Prometheus的连接
 func (sl *SourceLimit) ClientProm(prometheusURL string) (context.Context, v1.API, context.CancelFunc) {
-	fmt.Println("创建prometheus的连接")
+	//fmt.Println("创建prometheus的连接")
 	client, err := api.NewClient(api.Config{Address: prometheusURL})
 	if err != nil {
 		fmt.Printf("Error creating client: %v\n", err)
@@ -51,9 +53,8 @@ func (sl *SourceLimit) ClientProm(prometheusURL string) (context.Context, v1.API
 	return ctx, v1api, cancel
 }
 
+// 使用queryrange语句查询所有pod的CPU占用，并根据label调用内存的查询
 func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API, cancel context.CancelFunc) []MetricsInfo {
-	//cpuch := make(chan metricsInfo)
-
 	defer cancel()
 	podMetrics := make([]MetricsInfo, 0)
 	var mi MetricsInfo
@@ -63,7 +64,7 @@ func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API, cancel
 		End:   time.Now(),
 		Step:  time.Minute,
 	}
-	result, warnings, err := v1api.QueryRange(ctx, "rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\",job=\""+sl.Job+"\",pod!=\"\"}[5m])", r, v1.WithTimeout(5*time.Second))
+	result, warnings, err := v1api.QueryRange(ctx, "sum(irate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\",job=\""+sl.Job+"\",pod!=\"\"}[5m])) by (namespace,pod)", r, v1.WithTimeout(5*time.Second))
 	if err != nil {
 		fmt.Printf("Error querying Prometheus: %v\n", err)
 		os.Exit(1)
@@ -84,11 +85,13 @@ func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API, cancel
 			fmt.Printf("Error convert cpu or memory value ")
 		}
 		//fmt.Printf("namespace:%s,cpu:%f,mem:%d\n", string(metrix[i].Metric["namespace"]), cpuUsage, memUsage)
+		// 排除掉集群namespace等，可自定义
 		if !InArray(string(metrix[i].Metric["namespace"]), sl.NameSpace) {
 			if cpuUsage >= sl.CpuLimit || memUsage/1024/1024 >= sl.MemLimit {
 				mi.Namespace = string(metrix[i].Metric["namespace"])
 				mi.Pod = string(metrix[i].Metric["pod"])
 				mi.CpuUsage, err = strconv.ParseFloat(metrix[i].Values[0].Value.String(), 64)
+				mi.TimeStap = metrix[i].Values[0].Timestamp.Time()
 				mi.MemUsage = memUsage
 				podMetrics = append(podMetrics, mi)
 			}
@@ -98,6 +101,7 @@ func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API, cancel
 	return podMetrics
 }
 
+// 使用query语句查询pod的内存占用
 func MetricsMemValue(job, namespace, podname string, ctx context.Context, v1api v1.API) int64 {
 	memResult, warnings, err := v1api.Query(ctx, "sum(container_memory_working_set_bytes{job=\""+job+"\",namespace=\""+namespace+"\",container!=\"\",container!=\"POD\",pod=\""+podname+"\"}) by (namespace,pod)", time.Now(), v1.WithTimeout(5*time.Second))
 	if err != nil {

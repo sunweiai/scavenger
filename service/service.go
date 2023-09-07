@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"scavenger/client"
+	"scavenger/alertmode"
 	"scavenger/utils"
 	"strconv"
 	"strings"
@@ -18,6 +18,7 @@ type varEnv struct {
 	sourceType       []string
 	job              string
 	prometheusUrl    string
+	dingTalk         string
 	intervalTime     time.Duration
 }
 
@@ -38,6 +39,7 @@ func GetEnv() *varEnv {
 	envVar.intervalTime = time.Duration(convertExpire)
 	envVar.job = os.Getenv("JOB")
 	envVar.prometheusUrl = os.Getenv("URL")
+	envVar.dingTalk = os.Getenv("DINGTALK")
 
 	envVar.namespaceExclude = strings.Split(namespaceExlude, ";")
 	envVar.sourceType = strings.Split(sourceType, ";")
@@ -45,8 +47,8 @@ func GetEnv() *varEnv {
 }
 
 func HandMetrics(envVar *varEnv) {
-	clientSet := client.RestClient()
-	kindinfo := new(KindInfo)
+	//clientSet := client.RestClient()
+	//kindinfo := new(KindInfo)
 	var kubeClient = &utils.SourceLimit{
 		MemLimit:   envVar.memLimit,
 		CpuLimit:   envVar.cpuLimit,
@@ -62,9 +64,16 @@ func HandMetrics(envVar *varEnv) {
 
 	fmt.Println(podMetricsList)
 	// 根据metrics列表获取到要删除的pod
-	//podMetrics := new(utils.MetricsInfo)
-	for _, podMetrics := range podMetricsList {
-		sourceType := kindinfo.GetPodType(clientSet, podMetrics.Namespace, podMetrics.Pod)
-		DeleteSource(clientSet, sourceType.sourceName, sourceType.kind, sourceType.nameSpace)
+	if len(podMetricsList) > 0 {
+		//delayTime := time.Now()
+		for _, podMetrics := range podMetricsList {
+			jsonData := `{"msgtype": "markdown","markdown": {"title":"====高负载pod预警====","text":"====高负载pod警告==== \n\n 即将删除资源: \n\n
+namespace: ` + podMetrics.Namespace + ` \n\n podname: ` + podMetrics.Pod + `"}}`
+			fmt.Printf(jsonData)
+			alertmode.RequestDingding(envVar.dingTalk, jsonData)
+			//sourceType := kindinfo.GetPodType(clientSet, podMetrics.Namespace, podMetrics.Pod)
+			//DeleteSource(clientSet, sourceType.sourceName, sourceType.kind, sourceType.nameSpace)
+		}
 	}
+
 }
