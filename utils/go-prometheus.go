@@ -27,6 +27,7 @@ type SourceLimit struct {
 	NameSpace  []string
 	SourceType []string
 	Job        string
+	Dingtalk   string
 }
 
 func InArray(value string, arrays []string) bool {
@@ -49,7 +50,6 @@ func (sl *SourceLimit) ClientProm(prometheusURL string) (context.Context, v1.API
 
 	v1api := v1.NewAPI(client)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	//defer cancel()
 	return ctx, v1api, cancel
 }
 
@@ -84,7 +84,7 @@ func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API, cancel
 		if err != nil {
 			fmt.Printf("Error convert cpu or memory value ")
 		}
-		//fmt.Printf("namespace:%s,cpu:%f,mem:%d\n", string(metrix[i].Metric["namespace"]), cpuUsage, memUsage)
+		fmt.Printf("namespace:%s,cpu:%f,mem:%d\n", string(metrix[i].Metric["namespace"]), cpuUsage, memUsage)
 		// 排除掉集群namespace等，可自定义
 		if !InArray(string(metrix[i].Metric["namespace"]), sl.NameSpace) {
 			if cpuUsage >= sl.CpuLimit || memUsage/1024/1024 >= sl.MemLimit {

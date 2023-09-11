@@ -1,7 +1,7 @@
 package service
 
 import (
-	"fmt"
+	"k8s.io/client-go/kubernetes"
 	"log"
 	"os"
 	"scavenger/alertmode"
@@ -18,8 +18,8 @@ type varEnv struct {
 	sourceType       []string
 	job              string
 	prometheusUrl    string
-	dingTalk         string
-	intervalTime     time.Duration
+	//dingTalk         string
+	intervalTime time.Duration
 }
 
 func GetEnv() *varEnv {
@@ -39,41 +39,50 @@ func GetEnv() *varEnv {
 	envVar.intervalTime = time.Duration(convertExpire)
 	envVar.job = os.Getenv("JOB")
 	envVar.prometheusUrl = os.Getenv("URL")
-	envVar.dingTalk = os.Getenv("DINGTALK")
+	//envVar.dingTalk = os.Getenv("DINGTALK")
 
 	envVar.namespaceExclude = strings.Split(namespaceExlude, ";")
 	envVar.sourceType = strings.Split(sourceType, ";")
 	return &envVar
 }
 
-func HandMetrics(envVar *varEnv) {
-	//clientSet := client.RestClient()
-	//kindinfo := new(KindInfo)
+func GetMetrics(envVar *varEnv) []utils.MetricsInfo {
 	var kubeClient = &utils.SourceLimit{
 		MemLimit:   envVar.memLimit,
 		CpuLimit:   envVar.cpuLimit,
 		NameSpace:  envVar.namespaceExclude,
 		SourceType: envVar.sourceType,
 		Job:        envVar.job,
+		//Dingtalk:   envVar.dingTalk,
 	}
 
 	// 获取超过阈值的metrics列表
 	ctx, v1api, cancel := kubeClient.ClientProm(envVar.prometheusUrl)
 	//mem := utils.MetricsMemValue("k8s-test", "default", "whoami-6cdf669df7-mqjwx", ctx, v1api)
-	podMetricsList := kubeClient.MetricsCPUValue(ctx, v1api, cancel)
+	sourceMetricsList := kubeClient.MetricsCPUValue(ctx, v1api, cancel)
 
-	fmt.Println(podMetricsList)
-	// 根据metrics列表获取到要删除的pod
-	if len(podMetricsList) > 0 {
-		//delayTime := time.Now()
-		for _, podMetrics := range podMetricsList {
-			jsonData := `{"msgtype": "markdown","markdown": {"title":"====高负载pod预警====","text":"====高负载pod警告==== \n\n 即将删除资源: \n\n
-namespace: ` + podMetrics.Namespace + ` \n\n podname: ` + podMetrics.Pod + `"}}`
-			fmt.Printf(jsonData)
-			alertmode.RequestDingding(envVar.dingTalk, jsonData)
-			//sourceType := kindinfo.GetPodType(clientSet, podMetrics.Namespace, podMetrics.Pod)
-			//DeleteSource(clientSet, sourceType.sourceName, sourceType.kind, sourceType.nameSpace)
+	return sourceMetricsList
+}
+func SendMes(dingtalkUrl, bodydata string) {
+	if len(bodydata) > 0 {
+		alertmode.RequestDingding(dingtalkUrl, bodydata)
+	}
+}
+
+func HandMes(metrics []utils.MetricsInfo) (string, string) {
+	dingtalk := alertmode.UnmarshalJson("E:\\gitee_code\\go_project\\scavenger\\dingtalk-mes.json")
+	dingbody, url := alertmode.MarkdownBody(dingtalk, metrics)
+	return dingbody, url
+}
+
+func HandService(clientSet *kubernetes.Clientset, sourceMetrics []utils.MetricsInfo) {
+	kindInfo := new(KindInfo)
+	if len(sourceMetrics) > 0 {
+		mesData, url := HandMes(sourceMetrics)
+		SendMes(url, mesData)
+		for _, metrics := range sourceMetrics {
+			sourceType := kindInfo.GetPodType(clientSet, metrics.Namespace, metrics.Pod)
+			DeleteSource(clientSet, sourceType.sourceName, sourceType.kind, sourceType.nameSpace)
 		}
 	}
-
 }

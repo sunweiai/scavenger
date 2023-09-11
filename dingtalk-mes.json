@@ -1,0 +1,10 @@
+{
+  "url": "https://oapi.dingtalk.com/robot/send?access_token=5ee47bfc6293f6bb41cb8f3bebb098a6187d3b6b307280b3420c02aeac8fc0dd",
+  "body":{
+    "msgtype": "markdown",
+    "markdown": {
+      "title": "====警告删除高负载资源====",
+      "text": "====警告删除高负载pod====;即将删除资源:;namespace: {{namespace}};sourcename: {{sourcename}}"
+    }
+   }
+}
