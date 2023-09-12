@@ -76,12 +76,17 @@ func HandMes(metrics []utils.MetricsInfo) (string, string) {
 }
 
 func HandService(clientSet *kubernetes.Clientset, sourceMetrics []utils.MetricsInfo) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Runtime err caught: %v", r)
+		}
+	}()
 	kindInfo := new(KindInfo)
 	if len(sourceMetrics) > 0 {
-		mesData, url := HandMes(sourceMetrics)
-		SendMes(url, mesData)
 		for _, metrics := range sourceMetrics {
 			sourceType := kindInfo.GetPodType(clientSet, metrics.Namespace, metrics.Pod)
+			mesData, url := HandMes(sourceMetrics)
+			SendMes(url, mesData)
 			DeleteSource(clientSet, sourceType.sourceName, sourceType.kind, sourceType.nameSpace)
 		}
 	}

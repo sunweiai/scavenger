@@ -16,15 +16,11 @@ type KindInfo struct {
 
 // 获取pod的相关信息，并通过pod信息查询到部署此pod的资源类型
 func (kindInfo *KindInfo) GetPodType(client *kubernetes.Clientset, nameSpace, podName string) *KindInfo {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("Runtime err caught: %v", r)
-		}
-	}()
 	pod, err := client.CoreV1().Pods(nameSpace).Get(context.TODO(), podName, metav1.GetOptions{})
-	fmt.Printf("namespace:%s,podname:%s\n", nameSpace, podName)
+	//fmt.Printf("namespace:%s,podname:%s\n", nameSpace, podName)
 	if err != nil {
 		panic("Get pod error!")
+		return nil
 	}
 	kindInfo.kind = pod.OwnerReferences[0].Kind
 	kindInfo.sourceName = pod.OwnerReferences[0].Name
