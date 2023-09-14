@@ -27,8 +27,8 @@ type SourceLimit struct {
 	MemLimit   int64
 	NameSpace  []string
 	SourceType []string
-	Job        string
-	Dingtalk   string
+	//Job        []string
+	Dingtalk string
 }
 
 func InArray(value string, arrays []string) bool {
@@ -55,7 +55,7 @@ func (sl *SourceLimit) ClientProm(prometheusURL string) (context.Context, v1.API
 }
 
 // 使用queryrange语句查询所有pod的CPU占用，并根据label调用内存的查询
-func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API, cancel context.CancelFunc) []MetricsInfo {
+func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API, cancel context.CancelFunc, job string) []MetricsInfo {
 	defer cancel()
 	defer func() {
 		if r := recover(); r != nil {
@@ -70,7 +70,7 @@ func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API, cancel
 		End:   time.Now(),
 		Step:  time.Minute,
 	}
-	result, warnings, err := v1api.QueryRange(ctx, "sum(irate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\",job=\""+sl.Job+"\",pod!=\"\"}[5m])) by (namespace,pod)", r, v1.WithTimeout(5*time.Second))
+	result, warnings, err := v1api.QueryRange(ctx, "sum(irate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\",job=\""+job+"\",pod!=\"\"}[5m])) by (namespace,pod)", r, v1.WithTimeout(5*time.Second))
 	if err != nil {
 		fmt.Printf("Error querying Prometheus: %v\n", err)
 		os.Exit(1)
@@ -86,7 +86,7 @@ func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API, cancel
 	if len(metrix) > 0 {
 		for i := 0; i < len(metrix); i++ {
 			cpuUsage, err := strconv.ParseFloat(metrix[i].Values[0].Value.String(), 64)
-			memUsage := MetricsMemValue(sl.Job, string(metrix[i].Metric["namespace"]), string(metrix[i].Metric["pod"]), ctx, v1api)
+			memUsage := MetricsMemValue(job, string(metrix[i].Metric["namespace"]), string(metrix[i].Metric["pod"]), ctx, v1api)
 
 			if err != nil {
 				fmt.Printf("Error convert cpu or memory value ")

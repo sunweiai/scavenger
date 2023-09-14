@@ -8,7 +8,6 @@ import (
 	"scavenger/utils"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type varEnv struct {
@@ -16,10 +15,10 @@ type varEnv struct {
 	memLimit         int64
 	namespaceExclude []string
 	sourceType       []string
-	job              string
+	job              []string
 	prometheusUrl    string
 	//dingTalk         string
-	intervalTime time.Duration
+	//intervalTime time.Duration
 }
 
 func GetEnv() *varEnv {
@@ -35,13 +34,14 @@ func GetEnv() *varEnv {
 	}
 	namespaceExlude := os.Getenv("NAMESPACE")
 	sourceType := os.Getenv("SOURCETYPE")
-	convertExpire, err := strconv.ParseInt(os.Getenv("INTERVALTIME"), 10, 64)
-	envVar.intervalTime = time.Duration(convertExpire)
-	envVar.job = os.Getenv("JOB")
+	//convertExpire, err := strconv.ParseInt(os.Getenv("INTERVALTIME"), 10, 64)
+	//envVar.intervalTime = time.Duration(convertExpire)
+	job := os.Getenv("JOB")
 	envVar.prometheusUrl = os.Getenv("URL")
 	//envVar.dingTalk = os.Getenv("DINGTALK")
 
 	envVar.namespaceExclude = strings.Split(namespaceExlude, ";")
+	envVar.job = strings.Split(job, ";")
 	envVar.sourceType = strings.Split(sourceType, ";")
 	return &envVar
 }
@@ -52,14 +52,17 @@ func GetMetrics(envVar *varEnv) []utils.MetricsInfo {
 		CpuLimit:   envVar.cpuLimit,
 		NameSpace:  envVar.namespaceExclude,
 		SourceType: envVar.sourceType,
-		Job:        envVar.job,
+		//Job:        envVar.job,
 		//Dingtalk:   envVar.dingTalk,
 	}
+	var sourceMetricsList []utils.MetricsInfo
 
 	// 获取超过阈值的metrics列表
 	ctx, v1api, cancel := kubeClient.ClientProm(envVar.prometheusUrl)
 	//mem := utils.MetricsMemValue("k8s-test", "default", "whoami-6cdf669df7-mqjwx", ctx, v1api)
-	sourceMetricsList := kubeClient.MetricsCPUValue(ctx, v1api, cancel)
+	for _, job := range envVar.job {
+		sourceMetricsList = kubeClient.MetricsCPUValue(ctx, v1api, cancel, job)
+	}
 
 	return sourceMetricsList
 }
@@ -70,7 +73,7 @@ func SendMes(dingtalkUrl, bodydata string) {
 }
 
 func HandMes(metrics []utils.MetricsInfo) (string, string) {
-	dingtalk := alertmode.UnmarshalJson("E:\\gitee_code\\go_project\\scavenger\\dingtalk-mes.json")
+	dingtalk := alertmode.UnmarshalJson("/etc/scavenger/dingtalk-mes.json")
 	dingbody, url := alertmode.MarkdownBody(dingtalk, metrics)
 	return dingbody, url
 }
