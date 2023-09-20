@@ -4,7 +4,7 @@
     "msgtype": "markdown",
     "markdown": {
       "title": "====警告删除高负载资源====",
-      "text": "====警告删除高负载资源====;即将删除资源:;namespace: {{namespace}};sourcename: {{sourcename}}"
+      "text": "====警告删除高负载资源====;即将删除资源:;namespace: {{namespace}};sourcename: {{sourcename}};删除时间: {{timestamp}}"
     }
    }
 }
