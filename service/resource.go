@@ -6,6 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"log"
+	"time"
 )
 
 type KindInfo struct {
@@ -73,7 +74,7 @@ func DeleteDeployment(clientSet *kubernetes.Clientset, deploymentName, namespace
 	// 通过appsv1去访问核心api资源,并获取deployment列表
 	api := clientSet.AppsV1()
 
-	fmt.Printf("删除成功: deployment: %s,namespace: %s \n", deploymentName, namespace)
+	fmt.Printf("time:%s,删除成功: deployment: %s,namespace: %s \n", time.Now(), deploymentName, namespace)
 	fmt.Printf("++++++++\n")
 
 	err := api.Deployments(namespace).Delete(context.TODO(), deploymentName, metav1.DeleteOptions{})
@@ -86,7 +87,7 @@ func DeleteDeployment(clientSet *kubernetes.Clientset, deploymentName, namespace
 // 删除DaemonSet资源
 func DeleteDaemonSet(clientSet *kubernetes.Clientset, deamonSetName, namespace string) {
 	api := clientSet.AppsV1()
-	fmt.Printf("删除成功: deamonSet name: %s,namespace: %s\n", deamonSetName, namespace)
+	fmt.Printf("time:%s,删除成功: deamonSet name: %s,namespace: %s\n", time.Now(), deamonSetName, namespace)
 	fmt.Printf("++++++++\n")
 	err := api.DaemonSets(namespace).Delete(context.TODO(), deamonSetName, metav1.DeleteOptions{})
 	if err != nil {

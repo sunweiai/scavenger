@@ -7,6 +7,7 @@ import (
 	"os"
 	"scavenger/utils"
 	"strings"
+	"time"
 )
 
 type MarkdownMes struct {
@@ -54,6 +55,7 @@ func MarkdownBody(dingtalk DingTalk, metricsInfo []utils.MetricsInfo) (string, s
 		for _, metrics := range metricsInfo {
 			sourceMes := strings.ReplaceAll(dingtalk.Body.TextMes.Text, "{{namespace}}", metrics.Namespace)
 			sourceMes = strings.ReplaceAll(sourceMes, "{{sourcename}}", metrics.Pod)
+			sourceMes = strings.ReplaceAll(sourceMes, "{{timestamp}}", time.DateTime)
 			sourceMes = strings.ReplaceAll(sourceMes, ";", "\n\n")
 			sourceMesList = append(sourceMesList, sourceMes)
 			sourceMesList = append(sourceMesList, "\n\n----------\n\n")

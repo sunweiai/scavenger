@@ -31,6 +31,6 @@ func RequestDingding(dingdingUrl, jsonData string) {
 	}
 
 	// 打印响应内容
-	fmt.Println("响应状态码:", resp.Status)
+	//fmt.Println("响应状态码:", resp.Status)
 	fmt.Println("响应内容:", string(body))
 }
