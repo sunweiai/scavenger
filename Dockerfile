@@ -7,4 +7,4 @@ RUN apk add --no-cache tzdata \
     && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && echo 'Asia/Shanghai' >/etc/timezone \
     && apk del tzdata
-RUN go build -o gin_docker .
+RUN go build -o application .
