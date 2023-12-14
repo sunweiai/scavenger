@@ -38,6 +38,16 @@ steps:
       event:
         - push
 
+  rebuild-cache:
+    image: kunlun-local.shijicloud.com/drillster/drone-volume-cache
+    settings:
+      rebuild: true
+      mount:
+        - "./repo"
+        - "./.pnpm-store"
+    volumes:
+      - /backup/tmp/cache:/cache
+
 services:
   docker-dind:
     image: docker:24-dind
