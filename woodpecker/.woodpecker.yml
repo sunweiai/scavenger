@@ -1,0 +1,45 @@
+when:
+  branch:
+    - dev
+  event:
+    - push
+    - deployment
+  path:
+    exclude: ['kubernetes-yaml/*']
+    ignore_message: '[ALL]'
+
+steps:
+  restore-cache:
+    image: dev-scm.shijicloud.com/kunlun/drone-volume-cache
+    settings:
+      restore: true
+      mount:
+        - ./repo
+        - ./.pnpm-store
+      ttl: 180
+    # 少数step会有写法方面的差异，比如volumes
+    volumes:
+      - /backup/tmp/cache:/cache
+
+  publish-to-docker-tag:
+    image: dev-scm-local.shijicloud.com/kunlun/plugin-docker-buildx
+    environment:
+      - DOCKER_HOST=tcp://docker-dind:2375
+    settings:
+      platforms: linux/amd64
+      repo: registry-vpc.cn-hangzhou.aliyuncs.com/shiji-kunlun/scavenger
+      registry: registry-vpc.cn-hangzhou.aliyuncs.com
+      username: blackchocolator
+      password:
+        from_secret: ali_package_registry_password
+      dockerfile: ./Dockerfile
+      auto_tag: true
+    when:
+      event:
+        - push
+
+services:
+  docker-dind:
+    image: docker:24-dind
+    privileged: true
+    commands: dockerd --tls=false -H tcp://0.0.0.0:2375
