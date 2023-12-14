@@ -136,4 +136,4 @@ spec:
   strategy: # 更新策略
     rollingUpdate: # 滚动更新
       maxSurge: 1 # 最多超出的副本数量
-      maxUnavailable: 0
+      maxUnavailable: 1
