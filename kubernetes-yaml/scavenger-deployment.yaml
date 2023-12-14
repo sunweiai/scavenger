@@ -113,7 +113,7 @@ spec:
                       - watchSource # 标签值
               topologyKey: "kubernetes.io/name"
       containers:
-      - image: registry-vpc.cn-hangzhou.aliyuncs.com/sunw/scavenger:v1
+      - image: registry.cn-hangzhou.aliyuncs.com/shiji-kunlun/scavenger
         imagePullPolicy: Always
         envFrom:
           - configMapRef:
@@ -132,7 +132,7 @@ spec:
         - name: scavenger-config
           configMap:
             name: scavenger-config
-    serviceAccount: scavenger
+      serviceAccount: scavenger
   strategy: # 更新策略
     rollingUpdate: # 滚动更新
       maxSurge: 1 # 最多超出的副本数量

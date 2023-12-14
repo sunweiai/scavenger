@@ -1,10 +1,17 @@
-FROM golang:alpine
-WORKDIR $GOPATH/src/application
+FROM golang:1.20.4-alpine AS builder
+WORKDIR /application
 ADD . ./
 ENV GO111MODULE=on
-ENV GOPROXY="https://goproxy.io"
-RUN apk add --no-cache tzdata \
-    && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-    && echo 'Asia/Shanghai' >/etc/timezone \
-    && apk del tzdata
-RUN go build -o application .
+ENV GOPROXY="https://proxy.golang.com.cn,direct"
+RUN go build -o scavenger main.go
+
+FROM alpine
+
+WORKDIR /application
+COPY --from=builder /application/scavenger /application/scavenger
+
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+RUN echo 'Asia/Shanghai' >/etc/timezone
+# 设置编码
+ENV LANG C.UTF-8
+CMD ["./scavenger"]
