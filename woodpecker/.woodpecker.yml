@@ -3,6 +3,7 @@ when:
     - dev
   event:
     - push
+
 steps:
   restore-cache:
     image: dev-scm.shijicloud.com/kunlun/drone-volume-cache
@@ -12,6 +13,5 @@ steps:
         - ./repo
         - ./.pnpm-store
       ttl: 180
-    # 少数step会有写法方面的差异，比如volumes
     volumes:
       - /backup/tmp/cache:/cache
