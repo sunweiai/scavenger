@@ -13,6 +13,7 @@ import (
 type varEnv struct {
 	cpuLimit         float64
 	memLimit         int64
+	openfileLimit    int64
 	namespaceExclude []string
 	sourceType       []string
 	job              []string
@@ -32,6 +33,10 @@ func GetEnv() *varEnv {
 	if err != nil {
 		log.Fatal("Get env int error!")
 	}
+	envVar.openfileLimit, err = strconv.ParseInt(os.Getenv("OPENFILELIMIT"), 10, 64)
+	if err != nil {
+		log.Fatal("Get env int error!")
+	}
 	namespaceExlude := os.Getenv("NAMESPACE")
 	sourceType := os.Getenv("SOURCETYPE")
 	//convertExpire, err := strconv.ParseInt(os.Getenv("INTERVALTIME"), 10, 64)
@@ -48,10 +53,11 @@ func GetEnv() *varEnv {
 
 func GetMetrics(envVar *varEnv) []utils.MetricsInfo {
 	var kubeClient = &utils.SourceLimit{
-		MemLimit:   envVar.memLimit,
-		CpuLimit:   envVar.cpuLimit,
-		NameSpace:  envVar.namespaceExclude,
-		SourceType: envVar.sourceType,
+		MemLimit:      envVar.memLimit,
+		CpuLimit:      envVar.cpuLimit,
+		OpenfileLimit: envVar.openfileLimit,
+		NameSpace:     envVar.namespaceExclude,
+		SourceType:    envVar.sourceType,
 		//Job:        envVar.job,
 		//Dingtalk:   envVar.dingTalk,
 	}
