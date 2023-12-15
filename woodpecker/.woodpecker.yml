@@ -3,7 +3,6 @@ when:
     - dev
   event:
     - push
-    - deployment
 #  path:
 #    exclude: ['kubernetes-yaml/*']
 #    ignore_message: '[ALL]'
