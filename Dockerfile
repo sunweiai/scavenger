@@ -1,4 +1,4 @@
-FROM registry.cn-hangzhou.aliyuncs.com/sunw/golang:1.20.4-alpine AS builder
+FROM golang:1.20.4-alpine AS builder
 WORKDIR /application
 ADD . ./
 ENV GO111MODULE=on

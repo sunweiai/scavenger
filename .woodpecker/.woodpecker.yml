@@ -3,6 +3,9 @@ when:
     - dev
   event:
     - push
+  path:
+    exclude: [ 'kubernetes-yaml/*',Dockerfile ]
+    ignore_message: '[ALL]'
 
 steps:
   restore-cache:
