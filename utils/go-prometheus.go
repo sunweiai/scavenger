@@ -89,7 +89,7 @@ func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API, cancel
 		for i := 0; i < len(metrix); i++ {
 			cpuUsage, err := strconv.ParseFloat(metrix[i].Values[0].Value.String(), 64)
 			memUsage := MetricsMemValue(job, string(metrix[i].Metric["namespace"]), string(metrix[i].Metric["pod"]), ctx, v1api)
-			openfileUsage := MetricsOpenfilesValue(job, string(metrix[i].Metric["pod"]), ctx, v1api)
+			openfileUsage := MetricsOpenfilesValue(string(metrix[i].Metric["pod"]), ctx, v1api)
 
 			if err != nil {
 				fmt.Printf("Error convert cpu or memory value ")
@@ -136,8 +136,8 @@ func MetricsMemValue(job, namespace, podname string, ctx context.Context, v1api 
 }
 
 // 使用query语句查询pod的句柄占用
-func MetricsOpenfilesValue(job, podname string, ctx context.Context, v1api v1.API) int64 {
-	openfilesResult, warnings, err := v1api.Query(ctx, "sum(process_files_open_files{job=\""+job+"\",kubernetes_pod_name=\""+podname+"\"}) by (namespace,pod)", time.Now(), v1.WithTimeout(5*time.Second))
+func MetricsOpenfilesValue(podname string, ctx context.Context, v1api v1.API) int64 {
+	openfilesResult, warnings, err := v1api.Query(ctx, "sum(process_files_open_files{kubernetes_pod_name=\""+podname+"\"}) by (namespace,pod)", time.Now(), v1.WithTimeout(5*time.Second))
 	var openfilesUsage int64
 	if err != nil {
 		fmt.Printf("Error querying Prometheus: %v\n", err)
