@@ -4,9 +4,9 @@ when:
   event:
     - push
     - deployment
-  path:
-    exclude: ['kubernetes-yaml/*']
-    ignore_message: '[ALL]'
+#  path:
+#    exclude: ['kubernetes-yaml/*']
+#    ignore_message: '[ALL]'
 
 steps:
   restore-cache:
