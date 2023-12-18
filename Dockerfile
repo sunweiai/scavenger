@@ -1,4 +1,4 @@
-FROM golang:1.20.4-alpine AS builder
+FROM dev-scm-local.shijicloud.com/kunlun/golang:1.20.4-alpine AS builder
 WORKDIR /application
 ADD . ./
 ENV GO111MODULE=on
