@@ -19,7 +19,7 @@ steps:
       - /backup/tmp/cache:/cache
 
   publish-to-docker-tag:
-    image: dev-scm-local.shijicloud.com/kunlun/plugin-docker-buildx
+    image: nginx
     environment:
       - DOCKER_HOST=tcp://docker-dind:2375
     settings:

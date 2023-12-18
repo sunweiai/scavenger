@@ -1,5 +1,5 @@
 #FROM dev-scm-local.shijicloud.com/kunlun/golang:1.20.4-alpine AS builder
-FROM nginx
+FROM dev-scm-local.shijicloud.com/kunlun/golang:1.20.4-alpine
 WORKDIR /application
 ADD . ./
 ENV GO111MODULE=on
