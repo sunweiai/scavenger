@@ -3,7 +3,7 @@ FROM kunlun-local.shijicloud.com/golang:1.20.4-alpine
 WORKDIR /application
 ADD . ./
 ENV GO111MODULE=on
-ENV GOPROXY="https://proxy.golang.com.cn,direct"
+ENV GOPROXY="https://mirrors.aliyun.com/goproxy/,direct"
 RUN go build -o scavenger main.go
 
 #FROM alpine
