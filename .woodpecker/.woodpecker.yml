@@ -48,7 +48,7 @@ steps:
       username: blackchocolator
       password:
         from_secret: ali_package_registry_password
-      dockerfile: operation-management-portal/docker/Dockerfile
+      dockerfile: ./Dockerfile
       auto_tag: true
       buildkit_driveropt:
         - 'network=host'
