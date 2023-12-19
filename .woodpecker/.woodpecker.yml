@@ -18,7 +18,7 @@ steps:
     volumes:
       - /backup/tmp/cache:/cache
 
-  publish-to-docker-latest:
+  build:
     image: kunlun-local.shijicloud.com/golang:1.20.4-alpine
     environment:
       DOCKER_IMAGE_REGISTRY: registry-vpc.cn-hangzhou.aliyuncs.com
@@ -55,7 +55,7 @@ steps:
         - 'network=host'
     when:
       event:
-        - tag
+        - push
 
   rebuild-cache:
     image: kunlun-local.shijicloud.com/drillster/drone-volume-cache
