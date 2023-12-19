@@ -31,7 +31,6 @@ steps:
       target: docker_user_pass
     commands:
       - go build -o scavenger main.go
-      - ls .
     when:
       branch:
         - dev
