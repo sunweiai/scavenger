@@ -21,9 +21,6 @@ steps:
   build:
     image: kunlun-local.shijicloud.com/golang:1.20.4-alpine
     environment:
-      DOCKER_IMAGE_REGISTRY: registry-vpc.cn-hangzhou.aliyuncs.com
-      DOCKER_IMAGE_GROUP: shiji-kunlun
-      DOCKER_USER_NAME: blackchocolator
       GO111MODULE: on
       GOPROXY: https://goproxy.cn,direct
     secrets:
@@ -43,7 +40,7 @@ steps:
       - DOCKER_HOST=tcp://docker-dind:2375
     settings:
       platforms: linux/amd64
-      repo: registry-vpc.cn-hangzhou.aliyuncs.com/shiji-kunlun/k-octopus-tenant-console
+      repo: registry-vpc.cn-hangzhou.aliyuncs.com/shiji-kunlun/scavenger
       registry: registry-vpc.cn-hangzhou.aliyuncs.com
       username: blackchocolator
       password:
