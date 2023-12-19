@@ -58,6 +58,8 @@ data:
   CPULIMIT: "0.9"
   # 内存阈值,单位MB
   MEMLIMIT: "100"
+  # 句柄阈值
+  OPENFILELIMIT: "600"
   # 排除的命令空间，不做资源监控
   NAMESPACE: "kube-system;argocd"
   # 设置删除的资源类型,Deployment;DaemonSet
