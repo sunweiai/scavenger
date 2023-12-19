@@ -18,22 +18,22 @@ steps:
     volumes:
       - /backup/tmp/cache:/cache
 
-  publish-to-docker-tag:
-    image: dev-scm-local.shijicloud.com/kunlun/plugin-docker-buildx
+  publish-to-docker-latest:
+    image: kunlun-local.shijicloud.com/golang:1.20.4-alpine
     environment:
-      - DOCKER_HOST=tcp://docker-dind:2375
-    settings:
-      platforms: linux/amd64
-      repo: registry-vpc.cn-hangzhou.aliyuncs.com/shiji-kunlun/scavenger
-      registry: registry-vpc.cn-hangzhou.aliyuncs.com
-      username: blackchocolator
-      password:
-        from_secret: ali_package_registry_password
-      dockerfile: ./Dockerfile
-      auto_tag: true
-      buildkit_driveropt:
-        - 'network=host'
+      DOCKER_IMAGE_REGISTRY: registry-vpc.cn-hangzhou.aliyuncs.com
+      DOCKER_IMAGE_GROUP: shiji-kunlun
+      DOCKER_USER_NAME: blackchocolator
+      GO111MODULE: on
+      GOPROXY: https://goproxy.cn,direct
+    secrets:
+    - source: ali_package_registry_password
+      target: docker_user_pass
+    commands:
+      - go build -o scavenger main.go
     when:
+      branch:
+        - dev
       event:
         - push
 
@@ -47,8 +47,8 @@ steps:
     volumes:
       - /backup/tmp/cache:/cache
 
-services:
-  docker-dind:
-    image: docker:24-dind
-    privileged: true
-    commands: dockerd --tls=false -H tcp://0.0.0.0:2375
+#services:
+#  docker-dind:
+#    image: dev-scm-local.shijicloud.com/woodpecker-ci/docker:24-dind
+#    privileged: true
+#    commands: dockerd --tls=false -H tcp://0.0.0.0:2375
