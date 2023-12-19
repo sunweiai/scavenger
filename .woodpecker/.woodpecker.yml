@@ -38,24 +38,24 @@ steps:
       event:
         - push
 
-#  publish-to-docker-tag:
-#    image: dev-scm-local.shijicloud.com/woodpecker-ci/plugin-docker-buildx:2.2.1
-#    environment:
-#      - DOCKER_HOST=tcp://docker-dind:2375
-#    settings:
-#      platforms: linux/amd64
-#      repo: registry-vpc.cn-hangzhou.aliyuncs.com/shiji-kunlun/k-octopus-tenant-console
-#      registry: registry-vpc.cn-hangzhou.aliyuncs.com
-#      username: blackchocolator
-#      password:
-#        from_secret: ali_package_registry_password
-#      dockerfile: operation-management-portal/docker/Dockerfile
-#      auto_tag: true
-#      buildkit_driveropt:
-#        - 'network=host'
-#    when:
-#      event:
-#        - tag
+  publish-to-docker-tag:
+    image: dev-scm-local.shijicloud.com/woodpecker-ci/plugin-docker-buildx:2.2.1
+    environment:
+      - DOCKER_HOST=tcp://docker-dind:2375
+    settings:
+      platforms: linux/amd64
+      repo: registry-vpc.cn-hangzhou.aliyuncs.com/shiji-kunlun/k-octopus-tenant-console
+      registry: registry-vpc.cn-hangzhou.aliyuncs.com
+      username: blackchocolator
+      password:
+        from_secret: ali_package_registry_password
+      dockerfile: operation-management-portal/docker/Dockerfile
+      auto_tag: true
+      buildkit_driveropt:
+        - 'network=host'
+    when:
+      event:
+        - tag
 
   rebuild-cache:
     image: kunlun-local.shijicloud.com/drillster/drone-volume-cache
@@ -67,8 +67,8 @@ steps:
     volumes:
       - /backup/tmp/cache:/cache
 
-#services:
-#  docker-dind:
-#    image: dev-scm-local.shijicloud.com/woodpecker-ci/docker:24-dind
-#    privileged: true
-#    commands: dockerd --tls=false -H tcp://0.0.0.0:2375
+services:
+  docker-dind:
+    image: dev-scm-local.shijicloud.com/woodpecker-ci/docker:24-dind
+    privileged: true
+    commands: dockerd --tls=false -H tcp://0.0.0.0:2375
