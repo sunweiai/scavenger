@@ -14,19 +14,21 @@ import (
 )
 
 type MetricsInfo struct {
-	Job       string
-	Pod       string
-	Namespace string
-	CpuUsage  float64
-	MemUsage  int64
-	TimeStap  time.Time
+	Job           string
+	Pod           string
+	Namespace     string
+	CpuUsage      float64
+	MemUsage      int64
+	OpenfileUsage int64
+	TimeStap      time.Time
 }
 
 type SourceLimit struct {
-	CpuLimit   float64
-	MemLimit   int64
-	NameSpace  []string
-	SourceType []string
+	CpuLimit      float64
+	MemLimit      int64
+	OpenfileLimit int64
+	NameSpace     []string
+	SourceType    []string
 	//Job        []string
 	Dingtalk string
 }
@@ -87,6 +89,7 @@ func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API, cancel
 		for i := 0; i < len(metrix); i++ {
 			cpuUsage, err := strconv.ParseFloat(metrix[i].Values[0].Value.String(), 64)
 			memUsage := MetricsMemValue(job, string(metrix[i].Metric["namespace"]), string(metrix[i].Metric["pod"]), ctx, v1api)
+			openfileUsage := MetricsOpenfilesValue(string(metrix[i].Metric["pod"]), ctx, v1api)
 
 			if err != nil {
 				fmt.Printf("Error convert cpu or memory value ")
@@ -94,12 +97,13 @@ func (sl *SourceLimit) MetricsCPUValue(ctx context.Context, v1api v1.API, cancel
 			//fmt.Printf("namespace:%s,cpu:%f,mem:%d\n", string(metrix[i].Metric["namespace"]), cpuUsage, memUsage)
 			// 排除掉集群namespace等，可自定义
 			if !InArray(string(metrix[i].Metric["namespace"]), sl.NameSpace) {
-				if cpuUsage >= sl.CpuLimit || memUsage/1024/1024 >= sl.MemLimit {
+				if cpuUsage >= sl.CpuLimit || memUsage/1024/1024 >= sl.MemLimit || openfileUsage > sl.OpenfileLimit {
 					mi.Namespace = string(metrix[i].Metric["namespace"])
 					mi.Pod = string(metrix[i].Metric["pod"])
 					mi.CpuUsage, err = strconv.ParseFloat(metrix[i].Values[0].Value.String(), 64)
 					mi.TimeStap = metrix[i].Values[0].Timestamp.Time()
 					mi.MemUsage = memUsage
+					mi.OpenfileUsage = openfileUsage
 					podMetrics = append(podMetrics, mi)
 				}
 			}
@@ -129,4 +133,27 @@ func MetricsMemValue(job, namespace, podname string, ctx context.Context, v1api 
 	}
 
 	return memUsage
+}
+
+// 使用query语句查询pod的句柄占用
+func MetricsOpenfilesValue(podname string, ctx context.Context, v1api v1.API) int64 {
+	openfilesResult, warnings, err := v1api.Query(ctx, "sum(process_files_open_files{kubernetes_pod_name=\""+podname+"\"}) by (namespace,pod)", time.Now(), v1.WithTimeout(5*time.Second))
+	var openfilesUsage int64
+	if err != nil {
+		fmt.Printf("Error querying Prometheus: %v\n", err)
+		os.Exit(1)
+	}
+	if len(warnings) > 0 {
+		fmt.Printf("Warnings: %v\n", warnings)
+	}
+	//fmt.Println(job, namespace, podname)
+	if len(openfilesResult.(model.Vector)) > 0 {
+		openfilesUsage, err = strconv.ParseInt(openfilesResult.(model.Vector)[0].Value.String(), 10, 64)
+		if err != nil {
+			fmt.Printf("err:%v\n", err)
+		}
+	}
+	fmt.Printf("podname: %s,openfile value: %d", podname, openfilesUsage)
+
+	return openfilesUsage
 }

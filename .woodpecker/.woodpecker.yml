@@ -1,0 +1,70 @@
+when:
+  branch:
+    - dev
+  event:
+    - push
+  path:
+    exclude: [ 'kubernetes-yaml/*' ]
+    ignore_message: '[ALL]'
+
+steps:
+  restore-cache:
+    image: kunlun-local.shijicloud.com/drillster/drone-volume-cache
+    settings:
+      restore: true
+      mount:
+        - "./repo"
+        - "./.pnpm-store"
+    volumes:
+      - /backup/tmp/cache:/cache
+
+  build:
+    image: kunlun-local.shijicloud.com/golang:1.20.4-alpine
+    environment:
+      GO111MODULE: on
+      GOPROXY: https://goproxy.cn,direct
+    secrets:
+    - source: ali_package_registry_password
+      target: docker_user_pass
+    commands:
+      - go build -o scavenger main.go
+    when:
+      branch:
+        - dev
+      event:
+        - push
+
+  publish-to-docker-tag:
+    image: dev-scm-local.shijicloud.com/woodpecker-ci/plugin-docker-buildx:2.2.1
+    environment:
+      - DOCKER_HOST=tcp://docker-dind:2375
+    settings:
+      platforms: linux/amd64
+      repo: registry-vpc.cn-hangzhou.aliyuncs.com/shiji-kunlun/scavenger
+      registry: registry-vpc.cn-hangzhou.aliyuncs.com
+      username: blackchocolator
+      password:
+        from_secret: ali_package_registry_password
+      dockerfile: ./Dockerfile
+      auto_tag: true
+      buildkit_driveropt:
+        - 'network=host'
+    when:
+      event:
+        - push
+
+  rebuild-cache:
+    image: kunlun-local.shijicloud.com/drillster/drone-volume-cache
+    settings:
+      rebuild: true
+      mount:
+        - "./repo"
+        - "./.pnpm-store"
+    volumes:
+      - /backup/tmp/cache:/cache
+
+services:
+  docker-dind:
+    image: dev-scm-local.shijicloud.com/woodpecker-ci/docker:24-dind
+    privileged: true
+    commands: dockerd --tls=false -H tcp://0.0.0.0:2375
