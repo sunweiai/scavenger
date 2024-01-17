@@ -9,7 +9,7 @@ when:
 
 steps:
   restore-cache:
-    image: kunlun-local.shijicloud.com/woodpecker-ci/drone-volume-cache
+    image: dev-scm-local.shijicloud.com/woodpecker-ci/drone-volume-cache
     settings:
       restore: true
       mount:
@@ -19,7 +19,7 @@ steps:
       - /backup/tmp/cache:/cache
 
   build:
-    image: kunlun-local.shijicloud.com/woodpecker-ci/golang:1.20.4-alpine
+    image: dev-scm-local.shijicloud.com/woodpecker-ci/golang:1.20.4-alpine
     environment:
       GO111MODULE: on
       GOPROXY: https://goproxy.cn,direct
@@ -54,7 +54,7 @@ steps:
         - push
 
   rebuild-cache:
-    image: kunlun-local.shijicloud.com/woodpecker-ci/drone-volume-cache
+    image: dev-scm-local.shijicloud.com/woodpecker-ci/drone-volume-cache
     settings:
       rebuild: true
       mount:
