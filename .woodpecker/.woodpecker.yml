@@ -8,25 +8,24 @@ when:
     ignore_message: '[ALL]'
 
 steps:
-  restore-cache:
+  - name: restore-cache
     image: dev-scm-local.shijicloud.com/woodpecker-ci/drone-volume-cache
+    volumes:
+      - /backup/tmp/cache:/cache
     settings:
       restore: true
       mount:
-        - "./repo"
-        - "./.pnpm-store"
-    volumes:
-      - /backup/tmp/cache:/cache
+        - ./repo
+      ttl: 180
 
-  build:
-    image: dev-scm-local.shijicloud.com/woodpecker-ci/golang:1.20-alpine
+  - name: build
+    image: kunlun-local.shijicloud.com/golang:1.20.4-alpine
     environment:
-      GO111MODULE: on
-      GOPROXY: https://goproxy.cn,direct
-    secrets:
-    - source: ali_package_registry_password
-      target: docker_user_pass
+      DOCKER_USER_PASS:
+        from_secret: ali_package_registry_password
     commands:
+      - go env -w GO111MODULE=on 
+      - go env -w GOPROXY=https://goproxy.cn,direct
       - go build -o scavenger main.go
     when:
       branch:
@@ -34,12 +33,11 @@ steps:
       event:
         - push
 
-  publish-to-docker-tag:
+  - name: publish-to-docker-tag
     image: dev-scm-local.shijicloud.com/woodpecker-ci/plugin-docker-buildx:2.2.1
-    environment:
-      - DOCKER_HOST=tcp://docker-dind:2375
     settings:
-      platforms: linux/amd64
+      platforms: 
+        - linux/amd64
       repo: registry-vpc.cn-hangzhou.aliyuncs.com/shiji-kunlun/scavenger
       registry: registry-vpc.cn-hangzhou.aliyuncs.com
       username: blackchocolator
@@ -48,23 +46,16 @@ steps:
       dockerfile: ./Dockerfile
       auto_tag: true
       buildkit_driveropt:
-        - 'network=host'
+        - 'image=dev-scm-local.shijicloud.com/woodpecker-ci/moby/buildkit:buildx-stable-1'
     when:
       event:
         - push
 
-  rebuild-cache:
+  - name: rebuild-cache
     image: dev-scm-local.shijicloud.com/woodpecker-ci/drone-volume-cache
     settings:
       rebuild: true
       mount:
         - "./repo"
-        - "./.pnpm-store"
     volumes:
       - /backup/tmp/cache:/cache
-
-services:
-  docker-dind:
-    image: dev-scm-local.shijicloud.com/woodpecker-ci/docker:24-dind
-    privileged: true
-    commands: dockerd --tls=false -H tcp://0.0.0.0:2375
