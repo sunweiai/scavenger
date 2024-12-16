@@ -60,9 +60,3 @@ steps:
         - "./.pnpm-store"
     volumes:
       - /backup/tmp/cache:/cache
-
-services:
-  docker-dind:
-    image: dev-scm-local.shijicloud.com/woodpecker-ci/docker:24-dind
-    privileged: true
-    commands: dockerd --tls=false -H tcp://0.0.0.0:2375
