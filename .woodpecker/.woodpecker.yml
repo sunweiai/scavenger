@@ -10,13 +10,14 @@ when:
 steps:
   - name: restore-cache
     image: dev-scm-local.shijicloud.com/woodpecker-ci/drone-volume-cache
-    volumes:
-      - /backup/tmp/cache:/cache
     settings:
       restore: true
       mount:
-        - ./repo
+      - ./repo
+      - ./.pnpm-store
       ttl: 180
+    volumes:
+      - /backup/tmp/cache:/cache
 
   - name: build
     image: kunlun-local.shijicloud.com/golang:1.20.4-alpine
@@ -57,5 +58,6 @@ steps:
       rebuild: true
       mount:
         - "./repo"
+        - "./.pnpm-store"
     volumes:
       - /backup/tmp/cache:/cache
