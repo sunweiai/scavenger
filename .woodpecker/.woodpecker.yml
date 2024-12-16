@@ -21,7 +21,7 @@ steps:
   - name: build
     image: kunlun-local.shijicloud.com/golang:1.20.4-alpine
     environment:
-      DOCKER_USER_PASS::
+      DOCKER_USER_PASS:
         from_secret: ali_package_registry_password
     commands:
       - go env -w GO111MODULE=on 
