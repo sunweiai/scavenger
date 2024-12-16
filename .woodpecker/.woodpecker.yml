@@ -20,9 +20,9 @@ steps:
 
   - name: build
     image: kunlun-local.shijicloud.com/golang:1.20.4-alpine
- #   environment:
- #     docker_user_pass:
- #       from_secret: ali_package_registry_password
+    environment:
+      DOCKER_USER_PASS::
+        from_secret: ali_package_registry_password
     commands:
       - go env -w GO111MODULE=on 
       - go env -w GOPROXY=https://goproxy.cn,direct
