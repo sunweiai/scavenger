@@ -20,13 +20,12 @@ steps:
 
   - name: build
     image: kunlun-local.shijicloud.com/golang:1.20.4-alpine
-    environment:
-      GO111MODULE: on
-      GOPROXY: https://goproxy.cn,direct
     secrets:
     - source: ali_package_registry_password
       target: docker_user_pass
     commands:
+      - go env -w GO111MODULE=on 
+      - go env -w GOPROXY=https://goproxy.cn,direct
       - go build -o scavenger main.go
     when:
       branch:
@@ -36,8 +35,6 @@ steps:
 
   - name: publish-to-docker-tag
     image: dev-scm-local.shijicloud.com/woodpecker-ci/plugin-docker-buildx:2.2.1
-    environment:
-      - DOCKER_HOST=tcp://docker-dind:2375
     settings:
       platforms: linux/amd64
       repo: registry-vpc.cn-hangzhou.aliyuncs.com/shiji-kunlun/scavenger
@@ -48,7 +45,7 @@ steps:
       dockerfile: ./Dockerfile
       auto_tag: true
       buildkit_driveropt:
-        - 'network=host'
+        - 'image=dev-scm-local.shijicloud.com/woodpecker-ci/moby/buildkit:buildx-stable-1'
     when:
       event:
         - push
