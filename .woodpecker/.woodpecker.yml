@@ -34,7 +34,7 @@ steps:
         - push
 
   - name: publish-to-docker-tag
-    image: dev-scm-local.shijicloud.com/woodpecker-ci/plugin-docker-buildx:2.2.1
+    image: dev-scm-local.shijicloud.com/woodpecker-ci/plugin-docker-buildx:4.2.0
     settings:
       platforms: 
         - linux/amd64
