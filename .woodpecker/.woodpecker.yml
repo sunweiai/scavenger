@@ -3,6 +3,9 @@ when:
     - dev
   event:
     - push
+  path:
+    exclude: [ 'kubernetes-yaml/*' ]
+    ignore_message: '[ALL]'
 
 steps:
   - name: restore-cache
