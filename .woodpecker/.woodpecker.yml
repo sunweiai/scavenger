@@ -9,14 +9,14 @@ when:
 
 steps:
   - name: restore-cache
-    image: kunlun-local.shijicloud.com/drillster/drone-volume-cache
+    image: dev-scm-local.shijicloud.com/woodpecker-ci/drone-volume-cache
+    volumes:
+      - /backup/tmp/cache:/cache
     settings:
       restore: true
       mount:
-        - "./repo"
-        - "./.pnpm-store"
-    volumes:
-      - /backup/tmp/cache:/cache
+        - ./repo
+      ttl: 180
 
   - name: build
     image: kunlun-local.shijicloud.com/golang:1.20.4-alpine
@@ -52,11 +52,10 @@ steps:
         - push
 
   - name: rebuild-cache
-    image: kunlun-local.shijicloud.com/drillster/drone-volume-cache
+    image: dev-scm-local.shijicloud.com/woodpecker-ci/drone-volume-cache
     settings:
       rebuild: true
       mount:
         - "./repo"
-        - "./.pnpm-store"
     volumes:
       - /backup/tmp/cache:/cache
