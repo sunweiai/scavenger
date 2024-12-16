@@ -1,0 +1,63 @@
+when:
+  branch:
+    - dev
+  event:
+    - push
+  path:
+    exclude: [ 'kubernetes-yaml/*' ]
+    ignore_message: '[ALL]'
+
+steps:
+  - name: restore-cache
+    image: dev-scm-local.shijicloud.com/woodpecker-ci/drone-volume-cache
+    settings:
+      restore: true
+      mount:
+      - ./repo
+      - ./.pnpm-store
+      ttl: 180
+    volumes:
+      - /backup/tmp/cache:/cache
+
+  - name: build
+    image: kunlun-local.shijicloud.com/golang:1.20.4-alpine
+    environment:
+      DOCKER_USER_PASS:
+        from_secret: ali_package_registry_password
+    commands:
+      - go env -w GO111MODULE=on 
+      - go env -w GOPROXY=https://goproxy.cn,direct
+      - go build -o scavenger main.go
+    when:
+      branch:
+        - main
+      event:
+        - push
+
+  - name: publish-to-docker-tag
+    image: dev-scm-local.shijicloud.com/woodpecker-ci/plugin-docker-buildx:4.2.0
+    settings:
+      platforms: 
+        - linux/amd64
+      repo: registry-vpc.cn-hangzhou.aliyuncs.com/shiji-kunlun/scavenger
+      registry: registry-vpc.cn-hangzhou.aliyuncs.com
+      username: blackchocolator
+      password:
+        from_secret: ali_package_registry_password
+      dockerfile: ./Dockerfile
+      auto_tag: true
+      buildkit_driveropt:
+        - 'image=dev-scm-local.shijicloud.com/woodpecker-ci/moby/buildkit:buildx-stable-1'
+    when:
+      event:
+        - push
+
+  - name: rebuild-cache
+    image: dev-scm-local.shijicloud.com/woodpecker-ci/drone-volume-cache
+    settings:
+      rebuild: true
+      mount:
+        - "./repo"
+        - "./.pnpm-store"
+    volumes:
+      - /backup/tmp/cache:/cache
