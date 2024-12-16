@@ -55,7 +55,7 @@ metadata:
   namespace: kube-system
 data:
   # CPU阈值，单位core，1表示1个核心
-  CPULIMIT: "0.9"
+  CPULIMIT: "0.8"
   # 内存阈值,单位MB
   MEMLIMIT: "100"
   # 句柄阈值
