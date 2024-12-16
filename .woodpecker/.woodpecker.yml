@@ -8,7 +8,7 @@ when:
     ignore_message: '[ALL]'
 
 steps:
-  restore-cache:
+  - name: restore-cache
     image: kunlun-local.shijicloud.com/drillster/drone-volume-cache
     settings:
       restore: true
@@ -18,7 +18,7 @@ steps:
     volumes:
       - /backup/tmp/cache:/cache
 
-  build:
+  - name: build
     image: kunlun-local.shijicloud.com/golang:1.20.4-alpine
     environment:
       GO111MODULE: on
@@ -34,7 +34,7 @@ steps:
       event:
         - push
 
-  publish-to-docker-tag:
+  - name: publish-to-docker-tag
     image: dev-scm-local.shijicloud.com/woodpecker-ci/plugin-docker-buildx:2.2.1
     environment:
       - DOCKER_HOST=tcp://docker-dind:2375
@@ -53,7 +53,7 @@ steps:
       event:
         - push
 
-  rebuild-cache:
+  - name: rebuild-cache
     image: kunlun-local.shijicloud.com/drillster/drone-volume-cache
     settings:
       rebuild: true
