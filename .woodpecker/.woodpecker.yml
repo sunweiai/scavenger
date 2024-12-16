@@ -36,7 +36,8 @@ steps:
   - name: publish-to-docker-tag
     image: dev-scm-local.shijicloud.com/woodpecker-ci/plugin-docker-buildx:2.2.1
     settings:
-      platforms: linux/amd64
+      platforms: 
+        - linux/amd64
       repo: registry-vpc.cn-hangzhou.aliyuncs.com/shiji-kunlun/scavenger
       registry: registry-vpc.cn-hangzhou.aliyuncs.com
       username: blackchocolator
